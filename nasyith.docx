@@ -1,0 +1,195 @@
+from docx import Document
+from docx.shared import Pt, Inches
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+doc = Document()
+
+# Title
+title = doc.add_heading('DOKUMEN SPESIFIKASI UML SISTEM INFORMASI DESA (SIMDES)', level=1)
+title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+title.runs[0].font.size = Pt(22)
+title.runs[0].bold = True
+
+subtitle = doc.add_paragraph("Versi Mewah & Siap Pakai")
+subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
+subtitle.runs[0].font.size = Pt(14)
+subtitle.runs[0].italic = True
+
+doc.add_page_break()
+
+# Stylish Section Function
+def add_section(header, content, diagram_tag=None):
+    h = doc.add_heading(header, level=2)
+    h.runs[0].font.size = Pt(16)
+    h.runs[0].bold = True
+
+    for line in content.split("\n"):
+        p = doc.add_paragraph(line)
+        p.runs[0].font.size = Pt(11)
+    
+    # Add the diagram tag for visualization
+    if diagram_tag:
+        doc.add_paragraph(diagram_tag)
+        doc.add_paragraph() # Add an extra line break after the tag
+
+# Content sections
+sections = {
+"1. USE CASE DIAGRAM":
+"""Aktor Sistem:
+• Admin (Perangkat Desa/Sekdes)
+• Warga (Penduduk)
+• Kepala Desa
+
+Deskripsi:
+Use Case Diagram menggambarkan hubungan antara aktor dengan sistem dalam proses pelayanan administrasi kependudukan desa.
+
+Diagram (Mermaid Code):
+usecaseDiagram
+    actor "Admin (Perangkat Desa)" as Admin
+    actor "Warga" as Warga
+    actor "Kepala Desa" as Kades
+
+    package "Sistem Informasi Desa" {
+        usecase "Login" as UC1
+        usecase "Kelola Data Penduduk" as UC2
+        usecase "Kelola Kartu Keluarga" as UC3
+        usecase "Ajukan Surat Pengantar" as UC4
+        usecase "Verifikasi Surat" as UC5
+        usecase "Cetak Surat" as UC6
+        usecase "Lihat Laporan Statistik" as UC7
+    }
+
+    Admin --> UC1
+    Admin --> UC2
+    Admin --> UC3
+    Admin --> UC5
+    Admin --> UC6
+    Admin --> UC7
+
+    Warga --> UC1
+    Warga --> UC4
+
+    Kades --> UC1
+    Kades --> UC7
+""",
+
+"2. CLASS DIAGRAM":
+"""Deskripsi:
+Class Diagram menunjukkan struktur data utama dalam sistem SIMDES.
+
+Diagram (Mermaid Code):
+classDiagram
+    class User {
+        +int id_user
+        +string username
+        +string password
+        +string role
+        +login()
+        +logout()
+    }
+
+    class Penduduk {
+        +string NIK
+        +string nama_lengkap
+        +string tempat_lahir
+        +date tgl_lahir
+        +string pekerjaan
+        +updateData()
+    }
+
+    class KartuKeluarga {
+        +string No_KK
+        +string alamat
+        +string rt_rw
+        +string kepala_keluarga
+    }
+
+    class Surat {
+        +int id_surat
+        +date tgl_pengajuan
+        +string status
+        +string keperluan
+        +ajukanSurat()
+        +cetakSurat()
+    }
+
+    class JenisSurat {
+        +int id_jenis
+        +string nama_surat
+        +string kode_surat
+    }
+
+    User <|-- Penduduk
+    KartuKeluarga "1" -- "*" Penduduk
+    Penduduk "1" -- "*" Surat
+    JenisSurat "1" -- "*" Surat
+""",
+
+"3. SEQUENCE DIAGRAM":
+"""Deskripsi:
+Sequence Diagram menggambarkan urutan aktivitas ketika warga melakukan pengajuan surat.
+
+Diagram (Mermaid Code):
+sequenceDiagram
+    participant Warga
+    participant SistemInterface
+    participant ControllerSurat
+    participant Database
+
+    Warga->>SistemInterface: Login
+    SistemInterface->>Warga: Dashboard
+    Warga->>SistemInterface: Pilih Ajukan Surat
+    SistemInterface->>Warga: Form Surat
+    Warga->>SistemInterface: Isi & Kirim
+    SistemInterface->>ControllerSurat: Validasi
+
+    alt Valid
+        ControllerSurat->>Database: Simpan Pending
+        Database-->>ControllerSurat: OK
+        ControllerSurat-->>Warga: Berhasil
+    else Tidak Valid
+        ControllerSurat-->>Warga: Error
+    end
+""",
+
+"4. ACTIVITY DIAGRAM":
+"""Deskripsi:
+Activity Diagram menjelaskan alur kerja verifikasi surat oleh perangkat desa.
+
+Diagram (Mermaid Code):
+flowchart TD
+    Mulai --> Login[Admin Login]
+    Login --> Dashboard[Menu Surat Masuk]
+    Dashboard --> List[Pilih Surat Pending]
+    List --> Cek[Cek Kelengkapan]
+    Cek --> Decision{Lengkap?}
+
+    Decision -- Ya --> Acc[Setujui]
+    Acc --> Generate[Generate Nomor]
+    Generate --> Print[Cetak Surat]
+    Print --> Selesai
+
+    Decision -- Tidak --> Reject[Ditolak]
+    Reject --> Note[Kasih Catatan]
+    Note --> Selesai
+"""
+}
+
+diagram_tags = {
+    "1. USE CASE DIAGRAM": "",
+    "2. CLASS DIAGRAM": "",
+    "3. SEQUENCE DIAGRAM": "",
+    "4. ACTIVITY DIAGRAM": ""
+}
+
+
+for header, content in sections.items():
+    tag = diagram_tags.get(header)
+    add_section(header, content, tag)
+    doc.add_page_break()
+
+# Save
+path = "SIMDES_UML_Mewah.docx" # Disimpan di direktori saat ini
+doc.save(path)
+
+print(f"Dokumen berhasil disimpan di: {path}")
